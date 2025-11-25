@@ -4,7 +4,7 @@ import helmet from 'helmet';
 import dotenv from 'dotenv';
 
 import authRoutes from './routes/auth';
-//import rigRoutes from './routes/rigs';
+import rigsRoutes from './routes/rigs';
 
 dotenv.config();
 
@@ -33,7 +33,7 @@ app.use(express.json());
 
 // API Routes
 app.use('/api/auth', authRoutes);
-//app.use('/api/rigs', rigsRoutes);
+app.use('/api/rigs', rigsRoutes);
 
 app.listen(PORT, () => {
     console.log(`rig garage API, version 0.1.1`);

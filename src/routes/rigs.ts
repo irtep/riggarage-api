@@ -130,11 +130,11 @@ router.post('/', authenticateToken, (req: AuthRequest<{}, {}, SaveNewRigRequest>
 });
 
 // Update rig
-router.put('/:id', authenticateToken, (req: AuthRequest<{ id: string }, {}, UpdateRigRequest>, res) => {
+router.put('/:userId', authenticateToken, (req: AuthRequest<{ userId: string }, {}, UpdateRigRequest>, res) => {
   console.log('update rig post');
   try {
-    const { id } = req.params;
-    const { rig } = req.body;
+    const { userId } = req.params;
+    const { id, rig } = req.body;
 
     // Build dynamic update query
     const updates: string[] = [];
@@ -170,7 +170,7 @@ router.put('/:id', authenticateToken, (req: AuthRequest<{ id: string }, {}, Upda
     }
 
     updates.push('updatedAt = CURRENT_TIMESTAMP');
-    params.push(id, req.user?.id);
+    params.push(id, userId);
 
     db.run(
       `UPDATE rigs SET ${updates.join(', ')} WHERE id = ? AND userId = ?`,
