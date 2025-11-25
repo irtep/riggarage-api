@@ -73,8 +73,9 @@ router.post('/register', async (req: express.Request<{}, {}, RegisterRequest>, r
     try {
         const { username, password, auth, admin } = req.body;
 
-        if (!username || !password || !auth || !admin) {
-            res.status(400).json({ error: 'All fields are required' });
+        if (!username || !password || !auth || admin === undefined) {
+            console.log('fields missing', username, password, auth, admin);
+            res.status(406).json({ error: 'All fields are required' });
             return;
         }
 
@@ -95,6 +96,7 @@ router.post('/register', async (req: express.Request<{}, {}, RegisterRequest>, r
                 }
 
                 if (existingUser) {
+                    console.log('already exists: ', username);
                     res.status(400).json({ error: 'Username already exists' });
                     return;
                 }
