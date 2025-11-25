@@ -30,10 +30,10 @@ db.run(`
 
 // Get all rigs for current user
 router.get('/', authenticateToken, (req: AuthRequest, res) => {
-  console.log('getting rigs of user ', req.body.username);
+  console.log('getting rigs of user ', req.user?.id);
   db.all(
-    'SELECT * FROM rigs WHERE username = ? ORDER BY createdAt DESC',
-    [req.user?.username],
+    'SELECT * FROM rigs WHERE userId = ? ORDER BY createdAt DESC',
+    [req.user?.id],
     (err, rigs: Rig[]) => {
       if (err) {
         console.error('Database error:', err);
@@ -87,14 +87,14 @@ router.get('/:id', authenticateToken, (req: AuthRequest, res) => {
 router.post('/', authenticateToken, (req: AuthRequest<{}, {}, SaveNewRigRequest>, res) => {
   console.log('create rig post ');
   try {
-    const { username, rig } = req.body;
+    const { userId, rig } = req.body;
     /*console.log('name: ', name);
     console.log('userId: ', userId);
     console.log('nation: ', nation);
     console.log('pointslimit: ', pointsLimit);
     console.log('units: ', units);
     console.log('totalPoints: ', totalPoints);*/
-    if (!username || !rig) {
+    if (!userId || !rig) {
       res.status(400).json({ error: 'All fields are required' });
       return;
     }
@@ -103,9 +103,9 @@ router.post('/', authenticateToken, (req: AuthRequest<{}, {}, SaveNewRigRequest>
     const unitsJson = JSON.stringify(rig);
 
     db.run(
-      `INSERT INTO rigs (id, username, rig) 
+      `INSERT INTO rigs (id, userId, rig) 
        VALUES (?, ?, ?)`,
-      [rigId, username, rig],
+      [rigId, userId, rig],
       function(err) {
         if (err) {
           console.error('Database error:', err);
@@ -118,14 +118,13 @@ router.post('/', authenticateToken, (req: AuthRequest<{}, {}, SaveNewRigRequest>
           rigId,
           army: {
             id: rigId,
-            username,
             rig
           }
         });
       }
     );
   } catch (error) {
-    console.error('Create army error:', error);
+    console.error('Create rig error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });

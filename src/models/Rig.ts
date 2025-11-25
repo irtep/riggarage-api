@@ -1,14 +1,15 @@
 export interface Rig {
-    id: number;
-    username: string;
+    id: string;
+    userId: string;
     rig: string;
 };
 
 export interface SaveNewRigRequest {
-    username: string;
+    userId: string;
     rig: string;
 };
 
 export interface UpdateRigRequest {
+    id: string;
     rig: string;
 };
