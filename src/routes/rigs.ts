@@ -1,8 +1,8 @@
 import express from 'express';
 import { db } from '../database/database';
 import { authenticateToken, AuthRequest } from '../middleware/auth';
-import { Rig, SaveNewRigRequest, UpdateRigRequest } from '../models/Rig';
-import { v4 as uuidv4 } from 'uuid';
+import { RigObject/*, SaveNewRigRequest, UpdateRigRequest*/ } from '../models/Rig';
+//import { v4 as uuidv4 } from 'uuid';
 
 const router = express.Router();
 /*
@@ -12,12 +12,46 @@ export interface Rig {
     rig: string;
 };
 */
+/*
+db.run('DELETE FROM rigs', (err) => {
+  if (err) {
+    console.error('Error purging rigs table:', err);
+  } else {
+    console.log('Rigs table purged');
+  }
+});
+
+db.run('DROP TABLE IF EXISTS rigs', (err) => {
+  if (err) {
+    console.error('Error dropping rigs table:', err);
+  } else {
+    console.log('Rigs table dropped');
+  }
+});
+*/
 // Initialize rigs table
 db.run(`
   CREATE TABLE IF NOT EXISTS rigs (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      username TEXT NOT NULL,
-      rig TEXT NOT NULL,
+      id TEXT PRIMARY KEY,
+      userId INTEGER NOT NULL,
+      name TEXT NOT NULL,
+      chassis TEXT NOT NULL,
+      speed INTEGER NOT NULL,
+      realSpeed INTEGER NOT NULL,
+      armour INTEGER NOT NULL,
+      handling INTEGER NOT NULL,
+      resistanceFields INTEGER NOT NULL,
+      emptySlots INTEGER NOT NULL,
+      selectedWeapons TEXT NOT NULL,
+      mods TEXT NOT NULL,
+      gunnerSpecial TEXT NOT NULL,
+      driverSpecial TEXT NOT NULL,
+      rightTool TEXT NOT NULL,
+      concealedWeapon TEXT NOT NULL,
+      familiar TEXT NOT NULL,
+      familiarStats TEXT NOT NULL,
+      mines TEXT NOT NULL,
+      handlingMods INTEGER NOT NULL,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
 `, (err) => {
@@ -32,94 +66,102 @@ db.run(`
 router.get('/', authenticateToken, (req: AuthRequest, res) => {
   console.log('getting rigs of user ', req.user?.id);
   db.all(
-    'SELECT * FROM rigs WHERE userId = ? ORDER BY createdAt DESC',
+    'SELECT * FROM rigs WHERE userId = ? ORDER BY created_at DESC',
     [req.user?.id],
-    (err, rigs: Rig[]) => {
+    (err, rows: any[]) => {
       if (err) {
         console.error('Database error:', err);
         res.status(500).json({ error: 'Database error' });
         return;
       }
-
-      // Parse JSON units
-      const parsedrigs = rigs.map(savedRig => ({
-        ...savedRig,
-        rig: JSON.parse(savedRig.rig)
+      
+      // Parse JSON fields from database
+      const parsedRigs = rows.map(row => ({
+        id: row.id,
+        userId: row.userId,
+        name: row.name,
+        chassis: row.chassis,
+        speed: row.speed,
+        realSpeed: row.realSpeed,
+        armour: row.armour,
+        handling: row.handling,
+        resistanceFields: row.resistanceFields,
+        emptySlots: row.emptySlots,
+        selectedWeapons: JSON.parse(row.selectedWeapons),
+        mods: JSON.parse(row.mods),
+        gunnerSpecial: row.gunnerSpecial,
+        driverSpecial: row.driverSpecial,
+        rightTool: JSON.parse(row.rightTool),
+        concealedWeapon: row.concealedWeapon,
+        familiar: JSON.parse(row.familiar),
+        familiarStats: JSON.parse(row.familiarStats),
+        mines: JSON.parse(row.mines),
+        handlingMods: row.handlingMods
       }));
-      console.log('rigs: ', parsedrigs);
-      res.json({ rigs: parsedrigs });
+      
+      console.log('rigs: ', parsedRigs);
+      res.json(parsedRigs);
     }
   );
 });
 
-// Get specific army by ID
-/*
-router.get('/:id', authenticateToken, (req: AuthRequest, res) => {
-  const { id } = req.params;
-  console.log('specific army of id request', id);
-  db.get(
-    'SELECT * FROM rigs WHERE id = ? AND userId = ?',
-    [id, req.user?.id],
-    (err, army: any) => {
-      if (err) {
-        console.error('Database error:', err);
-        res.status(500).json({ error: 'Database error' });
-        return;
-      }
-
-      if (!army) {
-        res.status(404).json({ error: 'Army not found' });
-        return;
-      }
-
-      // Parse JSON units
-      const parsedArmy = {
-        ...army,
-        units: JSON.parse(army.units)
-      };
-      console.log('sending: ', parsedArmy);
-      res.json({ army: parsedArmy });
-    }
-  );
-});
-*/
 // Save new rig
-router.post('/', authenticateToken, (req: AuthRequest<{}, {}, SaveNewRigRequest>, res) => {
-  console.log('create rig post ');
+router.post('/', authenticateToken, (req: AuthRequest<{}, {}, RigObject>, res) => {
+  console.log('create rig post ', req.body);
   try {
-    const { userId, rig } = req.body;
-    /*console.log('name: ', name);
-    console.log('userId: ', userId);
-    console.log('nation: ', nation);
-    console.log('pointslimit: ', pointsLimit);
-    console.log('units: ', units);
-    console.log('totalPoints: ', totalPoints);*/
-    if (!userId || !rig) {
-      res.status(400).json({ error: 'All fields are required' });
+    const {
+      userId, id, name, chassis, speed, realSpeed, armour, handling, resistanceFields, 
+      emptySlots, selectedWeapons, mods, gunnerSpecial, driverSpecial, rightTool, 
+      concealedWeapon, familiar, familiarStats, mines, handlingMods
+    } = req.body;
+    console.log('props gathered');
+    /*
+    if (!userId || !id || !name) {
+      console.log('fields missing');
+      res.status(400).json({ error: 'Required fields missing' });
       return;
     }
-
-    const rigId = uuidv4();
-    const unitsJson = JSON.stringify(rig);
-
+      */
+    console.log('inserting to db');
     db.run(
-      `INSERT INTO rigs (id, userId, rig) 
-       VALUES (?, ?, ?)`,
-      [rigId, userId, rig],
-      function(err) {
+      `INSERT INTO rigs (
+        id, userId, name, chassis, speed, realSpeed, armour, handling, 
+        resistanceFields, emptySlots, selectedWeapons, mods, gunnerSpecial, 
+        driverSpecial, rightTool, concealedWeapon, familiar, familiarStats, 
+        mines, handlingMods
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        id,
+        userId,
+        name,
+        chassis,
+        speed,
+        realSpeed,
+        armour,
+        handling,
+        resistanceFields,
+        emptySlots,
+        JSON.stringify(selectedWeapons),
+        JSON.stringify(mods),
+        gunnerSpecial,
+        driverSpecial,
+        JSON.stringify(rightTool),
+        concealedWeapon,
+        JSON.stringify(familiar),
+        JSON.stringify(familiarStats),
+        JSON.stringify(mines),
+        handlingMods
+      ],
+      function (err) {
         if (err) {
           console.error('Database error:', err);
-          res.status(500).json({ error: 'Failed to create army' });
+          res.status(500).json({ error: 'Failed to create rig' });
           return;
         }
-
+        console.log('rig created successfully');
         res.status(201).json({
           message: 'Rig created successfully',
-          rigId,
-          army: {
-            id: rigId,
-            rig
-          }
+          id: id
         });
       }
     );
@@ -130,63 +172,70 @@ router.post('/', authenticateToken, (req: AuthRequest<{}, {}, SaveNewRigRequest>
 });
 
 // Update rig
-router.put('/:userId', authenticateToken, (req: AuthRequest<{ userId: string }, {}, UpdateRigRequest>, res) => {
+router.put('/:id', authenticateToken, (req: AuthRequest<{ id: string }, {}, RigObject>, res) => {
   console.log('update rig post');
   try {
-    const { userId } = req.params;
-    const { id, rig } = req.body;
+    const { id } = req.params;
+    const rig = req.body;
 
-    // Build dynamic update query
-    const updates: string[] = [];
-    const params: any[] = [];
-
-    updates.push('rig = ?');
-    params.push(rig);
-/*
-    if (name !== undefined) {
-      updates.push('name = ?');
-      params.push(name);
-    }
-    if (nation !== undefined) {
-      updates.push('nation = ?');
-      params.push(nation);
-    }
-    if (pointsLimit !== undefined) {
-      updates.push('pointsLimit = ?');
-      params.push(pointsLimit);
-    }
-    if (units !== undefined) {
-      updates.push('units = ?');
-      params.push(JSON.stringify(units));
-    }
-    if (totalPoints !== undefined) {
-      updates.push('totalPoints = ?');
-      params.push(totalPoints);
-    }
-*/
-    if (updates.length === 0) {
-      res.status(400).json({ error: 'No fields to update' });
+    if (!rig || !id) {
+      res.status(400).json({ error: 'Rig data required' });
       return;
     }
 
-    updates.push('updatedAt = CURRENT_TIMESTAMP');
-    params.push(id, userId);
-
     db.run(
-      `UPDATE rigs SET ${updates.join(', ')} WHERE id = ? AND userId = ?`,
-      params,
-      function(err) {
+      `UPDATE rigs SET 
+        name = ?,
+        chassis = ?,
+        speed = ?,
+        realSpeed = ?,
+        armour = ?,
+        handling = ?,
+        resistanceFields = ?,
+        emptySlots = ?,
+        selectedWeapons = ?,
+        mods = ?,
+        gunnerSpecial = ?,
+        driverSpecial = ?,
+        rightTool = ?,
+        concealedWeapon = ?,
+        familiar = ?,
+        familiarStats = ?,
+        mines = ?,
+        handlingMods = ?
+      WHERE id = ? AND userId = ?`,
+      [
+        rig.name,
+        rig.chassis,
+        rig.speed,
+        rig.realSpeed,
+        rig.armour,
+        rig.handling,
+        rig.resistanceFields,
+        rig.emptySlots,
+        JSON.stringify(rig.selectedWeapons),
+        JSON.stringify(rig.mods),
+        rig.gunnerSpecial,
+        rig.driverSpecial,
+        JSON.stringify(rig.rightTool),
+        rig.concealedWeapon,
+        JSON.stringify(rig.familiar),
+        JSON.stringify(rig.familiarStats),
+        JSON.stringify(rig.mines),
+        rig.handlingMods,
+        id,
+        req.user?.id
+      ],
+      function (err) {
         if (err) {
           console.error('Database error:', err);
           res.status(500).json({ error: 'Failed to update rig' });
           return;
         }
-
         if (this.changes === 0) {
-          res.status(404).json({ error: 'rig not found' });
+          res.status(404).json({ error: 'Rig not found' });
           return;
         }
-
         res.json({ message: 'Rig updated successfully' });
       }
     );
@@ -200,22 +249,20 @@ router.put('/:userId', authenticateToken, (req: AuthRequest<{ userId: string }, 
 router.delete('/:id', authenticateToken, (req: AuthRequest, res) => {
   console.log('delete rig post');
   const { id } = req.params;
-
+  
   db.run(
     'DELETE FROM rigs WHERE id = ? AND userId = ?',
     [id, req.user?.id],
-    function(err) {
+    function (err) {
       if (err) {
         console.error('Database error:', err);
         res.status(500).json({ error: 'Database error' });
         return;
       }
-
       if (this.changes === 0) {
         res.status(404).json({ error: 'Rig not found' });
         return;
       }
-
       res.json({ message: 'Rig deleted successfully' });
     }
   );
