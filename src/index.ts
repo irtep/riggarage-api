@@ -36,6 +36,6 @@ app.use('/api/auth', authRoutes);
 app.use('/api/rigs', rigsRoutes);
 
 app.listen(PORT, () => {
-    console.log(`rig garage API, version 0.2.1`);
+    console.log(`rig garage API, version 0.2.2`);
     console.log(`Server running at http://localhost:${PORT}`);
 });
