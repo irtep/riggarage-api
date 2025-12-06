@@ -55,7 +55,7 @@ router.post('/login', async (req: express.Request<{}, {}, LoginRequest>, res) =>
                     created_at: user.created_at,
                     admin: Boolean(user.admin) // Convert 0/1 to boolean, that sqlLite has changed to 0 and 1
                 };
-                console.log('responding');
+                console.log('responding: ', userWithoutPassword);
                 res.json({
                     token,
                     user: userWithoutPassword,
