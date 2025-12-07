@@ -24,30 +24,33 @@ const options = {
   cert: fs.readFileSync('cert.pem')
 };
 
-const JWT_SECRET = process.env.JWT_SECRET as string;
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
+//const JWT_SECRET = process.env.JWT_SECRET as string;
+//const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
 
 const app = express();
 const PORT = process.env.PORT || 5510;
 
 // Middleware
-app.use(
-    cors({
-        origin: [
-            // Local development
-            "http://localhost:3000",
-            "http://localhost:5509",
-            "http://127.0.0.1:3000",
-            "http://127.0.0.1:5509",
+app.use(cors({
+  origin: "https://irtep.github.io",
+  credentials: true,
+}));
 
-            "https://irtep.github.io",
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "https://irtep.github.io");
+  res.header("Access-Control-Allow-Credentials", "true");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
+  next();
+});
 
-            "https://irtep.github.io/riggarage"
-        ],
-        methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
-        credentials: true,
-    })
-);
+app.options("/*", (req, res) => {
+  res.header("Access-Control-Allow-Origin", "https://irtep.github.io");
+  res.header("Access-Control-Allow-Credentials", "true");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
+  return res.sendStatus(200);
+});
 
 app.use(helmet());
 app.use(express.json());
@@ -56,13 +59,7 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/rigs', rigsRoutes);
 
-/*
-app.listen(PORT, () => {
-    console.log(`rig garage API, version 0.4.1`);
-    console.log(`Server running at http://localhost:${PORT}`);
-});
-*/
 https.createServer(options, app).listen(PORT, () => {
-  console.log('version 1.1.0');
+  console.log('version 1.1.3');
   console.log(`HTTPS server running on https://193.28.89.151:${PORT}`);
 });
