@@ -24,42 +24,38 @@ const options = {
   cert: fs.readFileSync('cert.pem')
 };
 
-//const JWT_SECRET = process.env.JWT_SECRET as string;
-//const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
-
 const app = express();
 const PORT = process.env.PORT || 5510;
 
-// Middleware
+app.use(helmet());
+
 app.use(cors({
-  origin: "https://irtep.github.io",
-  credentials: true,
+  origin: "https://riggarage.irtep.com", // <-- your frontend domain
+  credentials: true,                      // if you send cookies / auth headers
 }));
 
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "https://irtep.github.io");
-  res.header("Access-Control-Allow-Credentials", "true");
-  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
-  next();
-});
-
-app.options("/*", (req, res) => {
-  res.header("Access-Control-Allow-Origin", "https://irtep.github.io");
-  res.header("Access-Control-Allow-Credentials", "true");
-  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
-  return res.sendStatus(200);
-});
-
-app.use(helmet());
 app.use(express.json());
 
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/rigs', rigsRoutes);
 
+// Test endpoint
+app.get('/api/test-cors', (req, res) => {
+  res.json({
+    message: 'CORS test successful',
+    timestamp: new Date().toISOString(),
+    corsHeaders: {
+      'Access-Control-Allow-Origin': res.get('Access-Control-Allow-Origin'),
+      'Access-Control-Allow-Credentials': res.get('Access-Control-Allow-Credentials')
+    }
+  });
+});
+
 https.createServer(options, app).listen(PORT, () => {
-  console.log('version 1.1.3');
-  console.log(`HTTPS server running on https://193.28.89.151:${PORT}`);
+  console.log('🚀 DEBUG MODE: Permissive CORS enabled');
+  console.log(`📋 Version: 1.1.8-DEBUG`);
+  console.log(`🔐 Server: https://193.28.89.151:${PORT}`);
+  console.log(`⚠️  WARNING: This configuration is for debugging only!`);
+  console.log(`📅 Started: ${new Date().toISOString()}`);
 });
